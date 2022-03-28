@@ -1,0 +1,206 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome file</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><h1 id="how-to-setup-remote-access-to-your-computer">How to setup remote access to your computer</h1>
+<p>I’m going to explain the process of setting up your computer for remote access. The process itself is complicated and depends heavily on your network setup and motherboard/network card manufacturer, so I won’t focus on that here (but I’ll outline the steps for you).</p>
+<h1 id="why">Why?</h1>
+<p>I’m travelling pretty often, and I don’t really want to carry my <s>gaming PC</s> workstation with me. I wanted to have remote access to it. Keeping the computer running 24/7 is not really an option, so I had to figure out how to turn it on remotely.</p>
+<h2 id="cant-i-just-install-parsec--and-call-it-a-day">Can’t I just install <a href="https://parsec.app/">Parsec</a>  and call it a day?</h2>
+<p>I’ll be using it in my tutorial. Parsec does all of the heavy lifting for us, but doesn’t include the option for remote start up.</p>
+<h1 id="prerequisites">Prerequisites</h1>
+<ul>
+<li>Raspberry Pi (or something similar running Linux)</li>
+<li>Wake on Lan enabled on your computer</li>
+<li>Ethernet cable (ideally connected from your router to your PC)
+<ul>
+<li>WoWLAN is possible, but I couln’t get it running, due to Windows disabling my network card in Sleep mode</li>
+</ul>
+</li>
+<li>A bit of patience</li>
+</ul>
+<p>Enabling Wake on LAN is kind of tricky, but in general you have to:</p>
+<ul>
+<li>Enable the setting in UEFI (depends on your motherboard manufacturer)</li>
+<li>Enable the setting for your network adapter (Ethernet, not Wi-Fi!)</li>
+<li>Disable power setting features for your network adapter (for Ethernet; again - you may or may not need it, it depends on your motherboard/network card manufacturer, I also had to reinstall drivers for it, since Power Management options were missing)
+<ul>
+<li>This also solves <a href="https://superuser.com/questions/1089768/wake-on-lan-port-forwarding-not-working">ARP issues</a></li>
+</ul>
+</li>
+<li>Disable Fast Startup (on Windows)</li>
+</ul>
+<p>There’s plenty of tutorials on the Internet that describe the process, and I’m sure you’ll stumble upon issues along the way :)</p>
+<ul>
+<li><a href="https://www.groovypost.com/howto/enable-wake-on-lan-windows-10/">https://www.groovypost.com/howto/enable-wake-on-lan-windows-10/</a></li>
+</ul>
+<h1 id="overview">Overview</h1>
+<p>The rough idea is to use <a href="https://pl.wikipedia.org/wiki/Wake_on_LAN">Wake on Lan</a> to wake up our computer. As the name suggests, it’s going to work in your local network. But we want it to work <strong>globally</strong>, right? So how do we do that?</p>
+<h2 id="attempt-1">Attempt #1</h2>
+<h3 id="requirements">Requirements</h3>
+<ul>
+<li>Static IP address</li>
+<li>PC connected to your router via Ethernet cable</li>
+</ul>
+<h3 id="description">Description</h3>
+<p>We have to access our local (the one with the computer you’d like to access) network somehow. Let’s imagine for a moment that your router has a static IP address. You may be tempted to do port forwarding from your router to your computer on port 7 or 9 (which are used for Wake on Lan), and then running some command like:</p>
+<pre><code>wolcmd &lt;mac_address&gt; &lt;static_ip_address&gt; &lt;subnet_address&gt; &lt;port&gt;
+</code></pre>
+<p>But in general you it’s not going to work all the time (or at all).</p>
+<h3 id="issues">Issues</h3>
+<ul>
+<li>Requires a static IP
+<ul>
+<li>Your mileage heavily depends on your ISP - it’s pretty straightforward with UPC, but you have to call the customer support and pay extra for it</li>
+<li>Take a look at Orange’s offer :) <a href="https://www.orange.pl/kid,4003367697,id,4004311379,title,Internet-ze-stalym-adresem-IP,helparticle.html">https://www.orange.pl/kid,4003367697,id,4004311379,title,Internet-ze-stalym-adresem-IP,helparticle.html</a>)</li>
+<li>I have no experience with other ISPs</li>
+</ul>
+</li>
+<li>It didn’t work for me for some reason</li>
+<li>You can’t (easily) run it from your phone</li>
+<li>Requires cable connection</li>
+<li>Requires port forwarding rules on your router</li>
+</ul>
+<h2 id="attempt-2">Attempt #2</h2>
+<h3 id="requirements-1">Requirements</h3>
+<ul>
+<li>Static IP address</li>
+<li>Raspberry Pi</li>
+<li>PC connected to your router via Ethernet cable</li>
+</ul>
+<h3 id="description-1">Description</h3>
+<p>If you’re unlucky (like me), attempt #1 didn’t work for you, so we have to find another way. We need something running 24/7 plugged into our home network, that way we can always access it and run some scripts.  Let’s imagine we still have our static IP address, but this time let’s make use of our Raspberry Pi.<br>
+I enabled always-on USB on my computer and plugged it in, but you may use a different power source. The Raspberry Pi is going to run 24/7, but</p>
+<blockquote>
+<p>Raspberry Pi Zero W draws around <strong>260mA at idle and 370mA when stressed using Stressberry</strong>.</p>
+</blockquote>
+<p>so it’s not really an issue :)<br>
+Now we can setup port forwarding from our router to the Raspberry Pi to access it using SSH. Then we can use <code>etherwake</code> to wake up our computer.</p>
+<h3 id="issues-1">Issues</h3>
+<ul>
+<li>Still requires a static IP address</li>
+<li>You need to SSH into the Raspberry Pi and run a script (not really convenient)</li>
+<li>Requires cable connection</li>
+<li>Requires port forwarding rules on your router</li>
+</ul>
+<h2 id="attempt-3">Attempt #3</h2>
+<h3 id="requirements-2">Requirements</h3>
+<ul>
+<li>Raspberry Pi</li>
+<li>PC connected to your router via Ethernet cable</li>
+</ul>
+<h3 id="description-2">Description</h3>
+<p>The reality is harsh and brutal, so a static IP address might be out of your reach. In that case, you can setup:</p>
+<ul>
+<li>A VPN (personally I like <a href="https://tailscale.com/">Tailscale</a>)
+<ul>
+<li>You can just plug in your devices to the VPN, and then SSH into the Raspberry PI. Simple, free and convenient (and probably secure!).</li>
+</ul>
+</li>
+<li>A Dynamic DNS (I can’t really recommend anything, and there are usually some free downsides to the free plan, like confirming your hostname every 30 days or so).</li>
+</ul>
+<h3 id="issues-2">Issues</h3>
+<ul>
+<li>You <strong>still</strong> need to SSH into the Raspberry PI</li>
+<li>It <strong>still</strong> Requires port forwarding rules on your router (when using Dynamic DNS)</li>
+<li>You can access the Raspberry Pi only on devices plugged into VPN (when using Tailscale)</li>
+<li>You can’t really avoid using the Ethernet Cable</li>
+</ul>
+<h2 id="attempt-4">Attempt #4</h2>
+<h3 id="requirements-3">Requirements</h3>
+<ul>
+<li>Raspberry Pi
+<ul>
+<li>Micro USB -&gt; USB adapter</li>
+<li>USB -&gt; Ethernet adapter</li>
+<li>Short Ethernet cable</li>
+</ul>
+</li>
+</ul>
+<h3 id="description-3">Description</h3>
+<p>The reality is even harsher than expected. Let’s say that:</p>
+<ul>
+<li>You don’t have a static IP address</li>
+<li>You cannot setup cable connection between your router and your PC (It’s just not possible at my apartment)</li>
+</ul>
+<p>No worries, you too can have an overcomplicated setup. I connected the the adapters mentioned in the requirements to the Raspberry Pi, and the connected it straight to my computer using the Ethernet cable. The interface appeared and required no setup at all.</p>
+<p><img src="https://scontent-frt3-1.xx.fbcdn.net/v/t1.15752-9/275013276_392529612327855_1531309467927021610_n.jpg?_nc_cat=107&amp;ccb=1-5&amp;_nc_sid=ae9488&amp;_nc_ohc=s3iChBSEFlgAX_jKZae&amp;_nc_ht=scontent-frt3-1.xx&amp;oh=03_AVIIKxvKo_T5u69Xz7u_rnbjPEHjUCj9h0DLYbD_7iqbQQ&amp;oe=6269892B" alt="Brak opisu."><br>
+<img src="https://scontent-frt3-1.xx.fbcdn.net/v/t1.15752-9/277176983_375685897550988_5390656454440622069_n.png?_nc_cat=104&amp;ccb=1-5&amp;_nc_sid=ae9488&amp;_nc_ohc=zrl2b4t0XlQAX90gi-o&amp;_nc_ht=scontent-frt3-1.xx&amp;oh=03_AVJeiQ0ELXvKbueenI1n5JaIbz8V6WWJEAsnlJCb4HQtZg&amp;oe=62692D19" alt="Brak opisu."></p>
+<p>If you’re using some Raspberry Pi with Ethernet port, then obviously you don’t have to buy any additional adapters. At the time of writing this buying any microcomputer is almost impossible due to the chip shortages, so I resorted to this workaround.</p>
+<p>To wake up your computer you’ll need two things:</p>
+<ul>
+<li>etherwake installed on the Raspberry Pi
+<ul>
+<li>just run <code>sudo apt install etherwake</code></li>
+</ul>
+</li>
+<li>your computer’s MAC address
+<ul>
+<li>On Windows:<br>
+Settings -&gt; Network &amp; Internet -&gt; Ethernet -&gt; Click on the Ethernet icon -&gt; Scroll down<br>
+<img src="https://i.ibb.co/Sv3Xkgw/Screenshot-2022-03-28-175142.png" alt="MAC Address"></li>
+</ul>
+</li>
+</ul>
+<p>SSH into the Raspberry Pi and run</p>
+<p><code>sudo etherwake -i eth0 &lt;MAC Address&gt;</code></p>
+<p>Your computer should turn on now. If not, go back to <strong>Prerequisites</strong> section and debug.<br>
+Now we have a proof of concept of a working setup, but this works only in your home network right now. We need to improve it.</p>
+<h2 id="making-it-work-globally">Making it work globally</h2>
+<p><img src="https://i.ibb.co/2jdBrv8/dyoa.png" alt="Motto"></p>
+<h3 id="requirements-4">Requirements</h3>
+<ul>
+<li><em>Fastened seatbelts</em></li>
+</ul>
+<h3 id="description-4">Description</h3>
+<p>We could go two ways about this:</p>
+<p><strong>1. Unsecure ugly hack that barely works (the fun way)<br>
+2. Magical secure-ish hack (also the fun way)</strong></p>
+<p>Let’s start with #1</p>
+<h4 id="creating-a-web-app">Creating a web app</h4>
+<p>The idea is to create a web app that will turn the computer on without SSH’ing into the Raspberry Pi. Since the app itself is pretty simple, I’ve created it for you:<br>
+<a href="Power%20on!">https://github.com/Karwasze/power-on</a><br>
+But how do we reach out Raspberry Pi outside of our home network? The answer is <strong>tunneling</strong>.<br>
+Take a look at <a href="https://ngrok.com/">ngrok</a> or <a href="https://github.com/localtunnel/localtunnel">localtunnel</a>, for the sake of our tutorial we’re going to use <strong>localtunnel</strong>.</p>
+<p>Install it:<br>
+<code>npm install -g localtunnel</code><br>
+and run<br>
+<code>lt --port 5000</code> to create a tunnel to your localhost, that is your Raspberry Pi.<br>
+No nginx setups, no DNS config, TLS included, what’s not to love?<br>
+Now you can access your web app and confirm it works as intended.</p>
+<h4 id="proof">Proof</h4>
+<pre><code>https://streamable.com/4u4imk
+</code></pre>
+<p>Bear in mind that you’re basically giving strangers privilege to turn on your computer (and probably access your Raspberry Pi and local network in case you got hacked). This could be improved by implementing password authorization or some kind of token 2FA.</p>
+<h4 id="creating-a-telegram-bot">Creating a telegram bot</h4>
+<p>Another approach is to create a telegram bot that will launch our computer for us.<br>
+Again, I already did the heavy lifting:<br>
+<a href="https://github.com/Karwasze/power-on-telegram">https://github.com/Karwasze/power-on-telegram</a><br>
+You just need to create a telegram bot and provide it’s API key to the app.<br>
+Then you have to message the bot and that’s basically it.</p>
+<p><img src="https://scontent-frt3-1.xx.fbcdn.net/v/t1.15752-9/276023920_1132746397523838_7666217656212227137_n.jpg?_nc_cat=104&amp;ccb=1-5&amp;_nc_sid=ae9488&amp;_nc_ohc=WzgkkSQmkF4AX8b5S73&amp;_nc_ht=scontent-frt3-1.xx&amp;oh=03_AVIV3yYX_W3Upxgn0Q4K3cnvD75phmx6gju-XC1UfeGSdw&amp;oe=6265FA23" alt="Brak opisu."></p>
+<p>It’s rough around the edges, you may want to create a custom button for your bot (so you don’t have to type the command every time), or to restrict which users can actually use the bot. I guess it’s still safer than directly exposing your Raspberry Pi :)</p>
+<h2 id="parsec">Parsec</h2>
+<p>Parsec allows us to actually access your computer remotely. Download it from <a href="https://parsec.app/">here</a> on your host and client machine, you also have to register an account and log in to both computers. It requires virtually no setup, so we have to do two more things:</p>
+<ul>
+<li>Put in it autostart (You just have to right click and select <strong>Run when my computer starts</strong>)</li>
+<li>Remove password from your Windows account
+<ul>
+<li>Since Parsec starts <strong>after</strong> you log in there is no (easy) way to provide a password on boot.</li>
+<li>It’s probably unsafe</li>
+</ul>
+</li>
+</ul>
+<h2 id="summary">Summary</h2>
+<p>Now you (and probably some hackers) can turn on your computer remotely at a push of a button. My apps can beeasily updated to provide additional layer of security or functionality, so feel free to open a PR if you’re looking for some open source contributions.</p>
+</div>
+</body>
+
+</html>
